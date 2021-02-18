@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+# Deployment will maintain Replica Set
+# Replica Set will maintain Num of Pod
+
+metadata:
+  name: golang-app
+  namespace: default # it should "roadrunner" in real case
+  labels:
+    desc: testing_app
+  
+    
+spec:
+  replicas: 1 
+  # Make sure we have num of pod  
+  selector:
+    # Watching num of pod in selected pod label  
+    matchLabels:
+      name: golang-app
+  template:
+    # Template for pod
+    metadata:
+      name: golang-app
+      # Replica set will add random char suffix  
+      labels:
+        name: golang-app
+        # We watch this "name" label for service and replica set
+    spec:
+     
+      containers:
+        - name: golang-app
+          image: iimnd/golang-app:v1.0.0 # Don't forget the version
+          ports:
+            # Use standard 8000 port for all system as much as possible
+            - containerPort: 8000
+          resources:
+            Give appropriate number
+            requests:
+              memory: "32Mi" 
+              cpu: "200m"
+            limits:
+              memory: "64Mi"
+              cpu: "250m"
+          volumeMounts:
+          - name: golang-volume
+            mountPath: /app/.env
+            subPath: .env
+          env:
+            # Inject POD spec
+            - name: POD_NAME
+              # value: your_value
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+          livenessProbe:
+            # If it fail, then kill the pod
+            # wait for initialDelaySeconds + failureThreshold * periodSeconds
+            httpGet:
+                path: /health
+                port: 8000
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 9 # 90s == 1.5m
+          readinessProbe:
+            # If it fail, then don't send the traffic
+            httpGet:
+                path: /health
+                port: 8000
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 3 # 30s
+          startupProbe:
+            # If it fail, then don't check liveness and readiness
+            httpGet:
+                path: /health
+                port: 8000
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            failureThreshold: 30 # 303s == +- 5m
+
+      volumes:
+      - name: golang-volume
+        configMap:
+         name: golang-app-env

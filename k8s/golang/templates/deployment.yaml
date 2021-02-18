@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "golang.fullname" . }}
+  labels:
+    {{- include "golang.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "golang.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "golang.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "golang.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          - name: golang-volume
+            mountPath: /app/.env
+            subPath: .env
+          ports:
+            # Use standard 8000 port for all system as much as possible
+            - containerPort: 8000
+          livenessProbe:
+            # If it fail, then kill the pod
+            # wait for initialDelaySeconds + failureThreshold * periodSeconds
+            httpGet:
+                path: /health
+                port: 8000
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 9 # 90s == 1.5m
+          readinessProbe:
+            # If it fail, then don't send the traffic
+            httpGet:
+                path: /health
+                port: 8000
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 3 # 30s
+          startupProbe:
+            # If it fail, then don't check liveness and readiness
+            httpGet:
+                path: /health
+                port: 8000
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            failureThreshold: 30 # 303s == +- 5m
+          
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        
+      {{- with .Values.nodeSelector }}
+          volumeMounts:
+          - name: golang-volume
+            mountPath: /app/.env
+            subPath: .env
+      
+    
+
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+      - name: golang-volume
+        configMap:
+         name: golang-app-env
+
