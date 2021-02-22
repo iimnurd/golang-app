@@ -26,7 +26,7 @@ spec:
         name: golang-app
         # We watch this "name" label for service and replica set
     spec:
-     
+      serviceAccountName: golang-app
       containers:
         - name: golang-app
           image: iimnd/golang-app:v1.0.0 # Don't forget the version
@@ -34,7 +34,7 @@ spec:
             # Use standard 8000 port for all system as much as possible
             - containerPort: 8000
           resources:
-            Give appropriate number
+           # Give appropriate number
             requests:
               memory: "32Mi" 
               cpu: "200m"
@@ -89,3 +89,12 @@ spec:
       - name: golang-volume
         configMap:
          name: golang-app-env
+
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: golang-app
+  labels:
+    account: golang-app
