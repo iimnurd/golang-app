@@ -1,7 +1,5 @@
 package main
 
-package backup
-
 import(
 	"net/http"
     "encoding/json"
