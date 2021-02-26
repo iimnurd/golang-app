@@ -7,7 +7,9 @@ metadata:
   name: golang-app
   namespace: default # it should "roadrunner" in real case
   labels:
+    app: golang-app
     desc: testing_app
+
   
     
 spec:
@@ -24,9 +26,10 @@ spec:
       # Replica set will add random char suffix  
       labels:
         name: golang-app
+        app: golang-app
         # We watch this "name" label for service and replica set
     spec:
-      serviceAccountName: golang-app
+      # serviceAccountName: golang-app
       containers:
         - name: golang-app
           image: iimnd/golang-app:v1.0.0 # Don't forget the version
@@ -91,10 +94,10 @@ spec:
          name: golang-app-env
 
 
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: golang-app
-  labels:
-    account: golang-app
+# ---
+# apiVersion: v1
+# kind: ServiceAccount
+# metadata:
+#   name: golang-app
+#   labels:
+#     account: golang-app

@@ -4,15 +4,19 @@ metadata:
   name: golang-app-service
   namespace: default # it should "roadrunner" in real case
   labels:
-    # For grouping and filtering 
+    app: golang-app
+    service: golang-app
     desc: testing_app
    
 spec:
   type: NodePort
   selector:
     name: golang-app
+    app: golang-app
   ports:
     - port: 8000
       protocol: TCP
       targetPort: 8000
+      name: http
       # Target to Pod port
+

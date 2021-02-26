@@ -8,20 +8,21 @@ spec:
   servers:
   - port:
       number: 80
-      name: golang-app
+      name: http
       protocol: HTTP
     hosts:
     - "*"
+ 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: golang-app
+  name: golang-app-service
 spec:
   hosts:
   - "*"
   gateways:
-  - golang-gateway
+  - golang-gateway #golang_gateway
   http:
   - match:
     - uri:
@@ -30,6 +31,5 @@ spec:
         exact: /webhook
     route:
     - destination:
-        host: golang-app
-        port:
-          number: 9000
+        host: golang-app-service #service name
+        

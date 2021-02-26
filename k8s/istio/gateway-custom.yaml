@@ -1,0 +1,48 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: api-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: nginx
+      protocol: TCP
+    hosts:
+    - "*"
+  - port:
+      number: 31400
+      name: http
+      protocol: TCP
+    hosts:
+    - "*"
+---
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: myapp-virtual-service
+spec:
+  hosts:
+  - php-local.info 
+  gateways:
+  - api-gateway
+  tcp:
+  - match:
+    - port: 80
+    route:
+    - destination:
+        host: nginx
+        port:
+          number: 80
+  - match:
+    - port: 31400
+    route:
+    - destination:
+        host: golang-app-service
+        port:
+          number: 8000
+        
+# check port available list on istio ingress kubectl get svc istio-ingressgateway -n istio-system -o yaml
