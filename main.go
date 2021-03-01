@@ -12,14 +12,15 @@ import(
     "github.com/joho/godotenv"
     "os"
     "strconv"
+    opentracing "github.com/opentracing/opentracing-go"
     "context"
 
-    "github.com/opentracing/opentracing-go"
-    "github.com/opentracing/opentracing-go/ext"
-    "github.com/uber/jaeger-client-go"
-    jaegercfg "github.com/uber/jaeger-client-go/config"
-    jaegerlog "github.com/uber/jaeger-client-go/log"
-    "github.com/uber/jaeger-lib/metrics"
+    // "github.com/opentracing/opentracing-go"
+    // "github.com/opentracing/opentracing-go/ext"
+    // "github.com/uber/jaeger-client-go"
+    // jaegercfg "github.com/uber/jaeger-client-go/config"
+    // jaegerlog "github.com/uber/jaeger-client-go/log"
+    // "github.com/uber/jaeger-lib/metrics"
  
 )
 var key string = ""
@@ -68,98 +69,19 @@ func main(){
    
     mux := http.NewServeMux()
 
-    log.Println("starting...")
-
-    cfg := jaegercfg.Configuration{
-        ServiceName: "app1",
-        Sampler: &jaegercfg.SamplerConfig{
-            Type:  jaeger.SamplerTypeConst,
-            Param: 1, // trace every call
-        },
-        Reporter: &jaegercfg.ReporterConfig{
-            LogSpans: false,
-        },
-    }
-
-    jLogger := jaegerlog.StdLogger
-    jMetricsFactory := metrics.NullFactory
-
-    tracer, closer, err := cfg.NewTracer(
-        jaegercfg.Logger(jLogger),
-        jaegercfg.Metrics(jMetricsFactory),
-    )
-
-    if err != nil {
-        log.Fatalf("could not initialize jaeger tracer: %s", err.Error())
-    }
-    defer closer.Close()
-
-    opentracing.SetGlobalTracer(tracer)
-
-    f1 := traceF1(tracer)
+   
 
 
 
     mux.HandleFunc("/webhook", echoHandler)
     mux.HandleFunc("/health", healthcheck)
-    mux.HandleFunc("/jaeger", f1)
+   
     http.ListenAndServe(":8000", mux)
 }
 
-func traceF1(tracer opentracing.Tracer) func(w http.ResponseWriter, r *http.Request) {
-    return func(w http.ResponseWriter, r *http.Request) {
 
-        spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-        span := tracer.StartSpan("start", ext.RPCServerOption(spanCtx))
-        defer span.Finish()
 
-        span.Context().ForeachBaggageItem(func(k, v string) bool {
-            fmt.Println(span, "baggage:", k, v)
-            span.LogKV(k, v)
-            return true
-        })
 
-        ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-        defer cancel()
-
-        ctx = opentracing.ContextWithSpan(ctx, span)
-
-        s, return1 := f1(ctx, tracer)
-
-        w.WriteHeader(http.StatusOK)
-        fmt.Fprintf(w, s+return1)
-        return
-    }
-}
-
-func f1(ctx context.Context, tracer opentracing.Tracer) (string, string) {
-
-    // span := root.Tracer().StartSpan("f1", opentracing.ChildOf(root.Context()))
-    span, ctx := opentracing.StartSpanFromContext(ctx, "f1")
-    defer span.Finish()
-
-    sleept := time.Duration(rand.Intn(1120)) * time.Millisecond
-    time.Sleep(sleept)
-
-    return1 := f2(ctx)
-    
-
-    s := "<html><body>f1 done:"
-
-    return s, return1
-
-}
-
-func f2(ctx context.Context) string {
-    span, ctx := opentracing.StartSpanFromContext(ctx, "f2")
-    defer span.Finish()
-
-    sleept := time.Duration(rand.Intn(1920)) * time.Millisecond
-    span.LogKV("sleep", sleept)
-    time.Sleep(sleept)
-
-    return "f2 done:"
-}
 
 
 
@@ -171,7 +93,7 @@ func (s Resp_time) MarshalJSON() ([]byte, error) {
     return json.Marshal(data)
 }
 
-func action(data Request, StartTime time.Time) (jsonInBytes []byte){
+func action(data Request, StartTime time.Time, ctx_parent context.Context) (jsonInBytes []byte){
 
     currentTime := time.Now()
 
@@ -192,7 +114,14 @@ func action(data Request, StartTime time.Time) (jsonInBytes []byte){
         }
     jsonInBytes, _ = json.Marshal(datas)
     
-    
+    tracer := opentracing.GlobalTracer()
+    span, _ := opentracing.StartSpanFromContext(ctx_parent, "action-handler")
+	
+    childSpan := tracer.StartSpan(
+        "child",
+        opentracing.ChildOf(span.Context()),
+    )
+    defer childSpan.Finish()
 
    return
   
@@ -207,7 +136,16 @@ func pop(alist *[]string) string {
  }
 
 
-func forward(data Request, StartTime time.Time, r *http.Request) (newData []byte) {
+func forward(data Request, StartTime time.Time, r *http.Request, ctx_parent context.Context) (newData []byte) {
+    tracer := opentracing.GlobalTracer()
+    span, _ := opentracing.StartSpanFromContext(ctx_parent, "action-handler")
+	
+    childSpan := tracer.StartSpan(
+        "child",
+        opentracing.ChildOf(span.Context()),
+    )
+    defer childSpan.Finish()
+
 
 url := pop(&data.Request)
 
@@ -219,7 +157,15 @@ jsonInBytes, err:= json.Marshal(datas)
 if err != nil {
     log.Fatalln(err) 
 }
-resp, err := http.Post(url, "application/json", bytes.NewReader(jsonInBytes))
+
+
+
+
+req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
+tracer.Inject(childSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
+
+resp, err := http.DefaultClient.Do(req)
+//resp, err := http.Post(url, "application/json", bytes.NewReader(jsonInBytes))
 //Handle Error
    if err != nil {
       log.Fatalf("An Error Occured %v", err)
@@ -288,9 +234,18 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
     if err != nil{
         panic(err)
     }
+
+    tracer := opentracing.GlobalTracer()
+
+    parentSpan := tracer.StartSpan("parent")
+    defer parentSpan.Finish()
+    ctx_parent := opentracing.ContextWithSpan(context.Background(), parentSpan)
+
+
+
     
     if (len(request.Request)<= 1){
-        b := action(request, start)
+        b := action(request, start, ctx_parent)
         
     w.Header().Set("Content-Type","application/json")
     
@@ -298,7 +253,7 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
     
 
     }else {
-        b := forward(request, start, r)
+        b := forward(request, start, r, ctx_parent)
         w.Header().Set("Content-Type","application/json")
     
         w.Write(b)

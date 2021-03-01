@@ -13,5 +13,7 @@ github.com/uber/jaeger-client-go v2.25.0+incompatible h1:IxcNZ7WRY1Y3G4poYlx24sz
 github.com/uber/jaeger-client-go v2.25.0+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
 github.com/uber/jaeger-lib v2.4.0+incompatible h1:fY7QsGQWiCt8pajv4r7JEvmATdCVaWxXbjwyYwsNaLQ=
 github.com/uber/jaeger-lib v2.4.0+incompatible/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
+github.com/yurishkuro/opentracing-tutorial v0.0.0-20200924164103-7ae271badb86 h1:v5MtUmgraox0i2lWMwmv/65YrJ5OfojftDlPjnoMFOE=
+github.com/yurishkuro/opentracing-tutorial v0.0.0-20200924164103-7ae271badb86/go.mod h1:OEn3n3nr9jMrVlrCH/v8wRAX3vlZVsny4lvbHvq4mgs=
 go.uber.org/atomic v1.7.0 h1:ADUqmZGgLDDfbSL9ZmPxKTybcoEYHgpYfELNoN+7hsw=
 go.uber.org/atomic v1.7.0/go.mod h1:fEN4uk6kAWBTFdckzkM89CLk9XfWZrxpCo0nPH17wJc=
