@@ -64,7 +64,7 @@ STOPSIGNAL SIGINT
 
 # Tell if our container will open this port
 # Set app to use this port too
-EXPOSE 9000
+EXPOSE 8000
 
 # There are 2 different method how docker run our program
 # Shell form: `CMD command param1 param2` equivalent with 

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: golang-app-env-2
+data:
+
+  # file-like keys
+  .env: |
+    APP_NAME=GOLANG
+    DEBUG=true    

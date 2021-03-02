@@ -32,10 +32,10 @@ spec:
       # serviceAccountName: golang-app
       containers:
         - name: golang-app-2
-          image: iimnd/golang-app:0.1.5 # versi 3 oprekan baru opentracing
+          image: iimnd/golang-app:0.1.7 # versi 3 oprekan baru opentracing
           ports:
             # Use standard 8000 port for all system as much as possible
-            - containerPort: 9000
+            - containerPort: 8000
           resources:
            # Give appropriate number
             requests:
@@ -45,7 +45,7 @@ spec:
               memory: "64Mi"
               cpu: "250m"
           volumeMounts:
-          - name: golang-volume
+          - name: golang-volume-2
             mountPath: /app/.env
             subPath: .env
           env:
@@ -61,7 +61,7 @@ spec:
             # wait for initialDelaySeconds + failureThreshold * periodSeconds
             httpGet:
                 path: /health
-                port: 9000
+                port: 8000
             successThreshold: 1
             timeoutSeconds: 1
             initialDelaySeconds: 0
@@ -71,7 +71,7 @@ spec:
             # If it fail, then don't send the traffic
             httpGet:
                 path: /health
-                port: 9000
+                port: 8000
             successThreshold: 1
             timeoutSeconds: 1
             initialDelaySeconds: 0
@@ -81,7 +81,7 @@ spec:
             # If it fail, then don't check liveness and readiness
             httpGet:
                 path: /health
-                port: 9000
+                port: 8000
             successThreshold: 1
             timeoutSeconds: 1
             initialDelaySeconds: 3
@@ -89,9 +89,9 @@ spec:
             failureThreshold: 30 # 303s == +- 5m
 
       volumes:
-      - name: golang-volume
+      - name: golang-volume-2
         configMap:
-         name: golang-app-env
+         name: golang-app-env-2
 
 
 # ---

@@ -16,7 +16,7 @@ spec:
   ports:
     - port: 9000
       protocol: TCP
-      targetPort: 9000
+      targetPort: 8000
       name: http2
       # Target to Pod port
 
