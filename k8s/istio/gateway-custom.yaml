@@ -18,6 +18,12 @@ spec:
       protocol: TCP
     hosts:
     - "*"
+  - port:
+      number: 31401
+      name: http2
+      protocol: TCP
+    hosts:
+    - "*"
 ---
 
 apiVersion: networking.istio.io/v1alpha3
@@ -44,5 +50,12 @@ spec:
         host: golang-app-service
         port:
           number: 8000
+  - match:
+    - port: 31401
+    route:
+    - destination:
+        host: golang-app-service-2
+        port:
+          number: 9000
         
 # check port available list on istio ingress kubectl get svc istio-ingressgateway -n istio-system -o yaml
