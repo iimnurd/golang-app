@@ -54,7 +54,7 @@ spec:
     - port: 31401
     route:
     - destination:
-        host: golang-app-service-2
+        host: rest-api-service
         port:
           number: 9000
         

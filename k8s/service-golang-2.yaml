@@ -1,22 +1,22 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: golang-app-service-2
+  name: rest-api-service
   namespace: default # it should "roadrunner" in real case
   labels:
-    app: golang-app-2
-    service: golang-app-2
+    app: rest-api
+    service: rest-api
     desc: testing_app
    
 spec:
   type: NodePort
   selector:
-    name: golang-app-2
-    app: golang-app-2
+    name: rest-api
+    app: rest-api
   ports:
-    - port: 9000
+    - port: 8080
       protocol: TCP
-      targetPort: 8000
+      targetPort: 8080
       name: http2
       # Target to Pod port
 

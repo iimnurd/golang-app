@@ -4,11 +4,11 @@ kind: Deployment
 # Replica Set will maintain Num of Pod
 
 metadata:
-  name: golang-app-2
+  name: rest-api
   namespace: default # it should "roadrunner" in real case
   labels:
-    app: golang-app-2
-    desc: testing_app
+    app: rest-api
+    desc: golang_rest_api
 
   
     
@@ -18,24 +18,24 @@ spec:
   selector:
     # Watching num of pod in selected pod label  
     matchLabels:
-      name: golang-app-2
+      name: rest-api
   template:
     # Template for pod
     metadata:
-      name: golang-app-2
+      name: rest-api
       # Replica set will add random char suffix  
       labels:
-        name: golang-app-2
-        app: golang-app-2
+        name: rest-api
+        app: rest-api
         # We watch this "name" label for service and replica set
     spec:
       # serviceAccountName: golang-app
       containers:
-        - name: golang-app-2
+        - name: rest-api
           image: iimnd/golang-app:0.1.7 # versi 3 oprekan baru opentracing
           ports:
             # Use standard 8000 port for all system as much as possible
-            - containerPort: 8000
+            - containerPort: 8080
           resources:
            # Give appropriate number
             requests:
@@ -61,7 +61,7 @@ spec:
             # wait for initialDelaySeconds + failureThreshold * periodSeconds
             httpGet:
                 path: /health
-                port: 8000
+                port: 8080
             successThreshold: 1
             timeoutSeconds: 1
             initialDelaySeconds: 0
@@ -71,7 +71,7 @@ spec:
             # If it fail, then don't send the traffic
             httpGet:
                 path: /health
-                port: 8000
+                port: 8080
             successThreshold: 1
             timeoutSeconds: 1
             initialDelaySeconds: 0
@@ -81,7 +81,7 @@ spec:
             # If it fail, then don't check liveness and readiness
             httpGet:
                 path: /health
-                port: 8000
+                port: 8080
             successThreshold: 1
             timeoutSeconds: 1
             initialDelaySeconds: 3
