@@ -117,7 +117,7 @@ func action(data Request, StartTime time.Time,  r *http.Request, tracer opentrac
         },
     }
     if (os.Getenv("DEBUG") == "true"){
-        key = os.Getenv("APP_NAME")+"-actions-"+strconv.Itoa(rand.Intn(1000))
+        key = os.Getenv("APP_NAME")+"-action-"+strconv.Itoa(rand.Intn(1000))
         }else {
         key = os.Getenv("APP_NAME")
         }
@@ -172,9 +172,7 @@ if err_span != nil {
 
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
-if err := Inject(span, req); err != nil {
-    return 
-}
+Inject(span, req)
 resp, err := http.DefaultClient.Do(req)
 
    if err != nil {
