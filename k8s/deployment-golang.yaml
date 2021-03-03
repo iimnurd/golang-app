@@ -32,18 +32,18 @@ spec:
       # serviceAccountName: golang-app
       containers:
         - name: golang-app
-          image: iimnd/golang-app:0.1.4 # versi 3 oprekan baru opentracing
+          image: iimnd/golang-app:0.1.8 # versi 3 oprekan baru opentracing
           ports:
             # Use standard 8000 port for all system as much as possible
             - containerPort: 8000
-          resources:
-           # Give appropriate number
-            requests:
-              memory: "32Mi" 
-              cpu: "200m"
-            limits:
-              memory: "64Mi"
-              cpu: "250m"
+          # resources:
+          #  # Give appropriate number
+          #   requests:
+          #     memory: "32Mi" 
+          #     cpu: "200m"
+          #   limits:
+          #     memory: "64Mi"
+          #     cpu: "250m"
           volumeMounts:
           - name: golang-volume
             mountPath: /app/.env
@@ -56,37 +56,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
 
-          livenessProbe:
-            # If it fail, then kill the pod
-            # wait for initialDelaySeconds + failureThreshold * periodSeconds
-            httpGet:
-                path: /health
-                port: 8000
-            successThreshold: 1
-            timeoutSeconds: 1
-            initialDelaySeconds: 0
-            periodSeconds: 10
-            failureThreshold: 9 # 90s == 1.5m
-          readinessProbe:
-            # If it fail, then don't send the traffic
-            httpGet:
-                path: /health
-                port: 8000
-            successThreshold: 1
-            timeoutSeconds: 1
-            initialDelaySeconds: 0
-            periodSeconds: 10
-            failureThreshold: 3 # 30s
-          startupProbe:
-            # If it fail, then don't check liveness and readiness
-            httpGet:
-                path: /health
-                port: 8000
-            successThreshold: 1
-            timeoutSeconds: 1
-            initialDelaySeconds: 3
-            periodSeconds: 10
-            failureThreshold: 30 # 303s == +- 5m
+         
 
       volumes:
       - name: golang-volume
