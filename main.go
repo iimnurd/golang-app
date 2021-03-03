@@ -13,7 +13,7 @@ import(
     "os"
     "strconv"
      "github.com/opentracing/opentracing-go"
-    // "context"
+     "context"
     "io"
     "github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
@@ -101,8 +101,8 @@ func (s Resp_time) MarshalJSON() ([]byte, error) {
 func action(data Request, StartTime time.Time,  r *http.Request, tracer opentracing.Tracer) (jsonInBytes []byte){
     
 
-span := StartSpanFromRequest(tracer, r)
-defer span.Finish()
+    span := StartSpanFromRequest(tracer, r)
+    defer span.Finish()
 
     currentTime := time.Now()
 
@@ -117,7 +117,7 @@ defer span.Finish()
         },
     }
     if (os.Getenv("DEBUG") == "true"){
-        key = os.Getenv("APP_NAME")+"-action-"+strconv.Itoa(rand.Intn(1000))
+        key = os.Getenv("APP_NAME")+"-actions-"+strconv.Itoa(rand.Intn(1000))
         }else {
         key = os.Getenv("APP_NAME")
         }
@@ -160,15 +160,15 @@ defer span.Finish()
 
 
 
-// ctx := opentracing.ContextWithSpan(context.Background(), span)
+ctx := opentracing.ContextWithSpan(context.Background(), span)
 
-// span, err_span := opentracing.StartSpanFromContext(ctx, "request-send")
-// defer span.Finish()
+span, err_span := opentracing.StartSpanFromContext(ctx, "request-send")
+defer span.Finish()
 
 
-// if err_span != nil {
-//     log.Fatalf("An Error Occured %v", err_span)
-//  }
+if err_span != nil {
+    log.Fatalf("An Error Occured %v", err_span)
+ }
 
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
