@@ -8,3 +8,4 @@ data:
   .env: |
     APP_NAME=GOLANG
     DEBUG=true    
+    SERVICE_NAME= SERVICE-1

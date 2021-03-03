@@ -5,7 +5,6 @@ metadata:
   namespace: default # it should "roadrunner" in real case
   labels:
     app: rest-api
-    service: rest-api
     desc: testing_app
    
 spec:
@@ -14,9 +13,9 @@ spec:
     name: rest-api
     app: rest-api
   ports:
-    - port: 8080
+    - port: 9000
       protocol: TCP
-      targetPort: 8080
-      name: http2
+      targetPort: 8000
+      name: rest-api
       # Target to Pod port
 

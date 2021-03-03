@@ -1,10 +1,10 @@
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
-  name: golang-gateway
+  name: httpbin-gateway
 spec:
   selector:
-    istio: ingressgateway # use istio default controller
+    istio: ingressgateway # use Istio default gateway implementation
   servers:
   - port:
       number: 80
@@ -12,17 +12,16 @@ spec:
       protocol: HTTP
     hosts:
     - "*"
- 
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
-  name: golang-app-service
+  name: httpbin
 spec:
   hosts:
   - "*"
   gateways:
-  - golang-gateway #golang_gateway
+  - httpbin-gateway
   http:
   - match:
     - uri:
@@ -30,7 +29,8 @@ spec:
     - uri:
         prefix: /webhook
     route:
-        - destination:
-            host: golang-app-service
-            port:
-              number: 8000
+    - destination:
+        port:
+          number: 8000
+        host: golang-app-service
+

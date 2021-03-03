@@ -14,6 +14,11 @@ import(
     "strconv"
     opentracing "github.com/opentracing/opentracing-go"
     "context"
+    "io"
+    "github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go/config"
+    "github.com/opentracing/opentracing-go/ext"
+    
 
     // "github.com/opentracing/opentracing-go"
     // "github.com/opentracing/opentracing-go/ext"
@@ -76,7 +81,7 @@ func main(){
     mux.HandleFunc("/webhook", echoHandler)
     mux.HandleFunc("/health", healthcheck)
    
-    http.ListenAndServe(":9000", mux)
+    http.ListenAndServe(":8000", mux)
 }
 
 
@@ -93,7 +98,7 @@ func (s Resp_time) MarshalJSON() ([]byte, error) {
     return json.Marshal(data)
 }
 
-func action(data Request, StartTime time.Time, ctx_parent context.Context) (jsonInBytes []byte){
+func action(data Request, StartTime time.Time) (jsonInBytes []byte){
 
     currentTime := time.Now()
 
@@ -114,14 +119,6 @@ func action(data Request, StartTime time.Time, ctx_parent context.Context) (json
         }
     jsonInBytes, _ = json.Marshal(datas)
     
-    tracer := opentracing.GlobalTracer()
-    span, _ := opentracing.StartSpanFromContext(ctx_parent, "action-handler")
-	
-    childSpan := tracer.StartSpan(
-        "child",
-        opentracing.ChildOf(span.Context()),
-    )
-    defer childSpan.Finish()
 
    return
   
@@ -136,15 +133,8 @@ func pop(alist *[]string) string {
  }
 
 
-func forward(data Request, StartTime time.Time, r *http.Request, ctx_parent context.Context) (newData []byte) {
-    tracer := opentracing.GlobalTracer()
-    span, _ := opentracing.StartSpanFromContext(ctx_parent, "action-handler")
-	
-    childSpan := tracer.StartSpan(
-        "child",
-        opentracing.ChildOf(span.Context()),
-    )
-    defer childSpan.Finish()
+func forward(data Request, StartTime time.Time, r *http.Request, span opentracing.Span ) (newData []byte) {
+  
 
 
 url := pop(&data.Request)
@@ -159,14 +149,20 @@ if err != nil {
 }
 
 
-
+ctx := opentracing.ContextWithSpan(context.Background(), span)
+span, err_span := opentracing.StartSpanFromContext(ctx, "request-send")
+defer span.Finish()
+if err_span != nil {
+    log.Fatalf("An Error Occured %v", err)
+ }
 
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
-tracer.Inject(childSpan.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 
+if err := Inject(span, req); err != nil {
+    return 
+}
 resp, err := http.DefaultClient.Do(req)
-//resp, err := http.Post(url, "application/json", bytes.NewReader(jsonInBytes))
-//Handle Error
+
    if err != nil {
       log.Fatalf("An Error Occured %v", err)
    }
@@ -224,6 +220,11 @@ func getResponse(body []byte) (*Response, error) {
 
 
 func echoHandler(w http.ResponseWriter, r *http.Request){
+    thisServiceName := os.Getenv("SERVICE_NAME")
+    tracer, closer := Init(thisServiceName)
+	defer closer.Close()
+	opentracing.SetGlobalTracer(tracer)
+
     start := time.Now()
 
     request := Request{} //initialize empty user
@@ -235,17 +236,13 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
         panic(err)
     }
 
-    tracer := opentracing.GlobalTracer()
+    span := StartSpanFromRequest(tracer, r)
+	defer span.Finish()
 
-    parentSpan := tracer.StartSpan("parent")
-    defer parentSpan.Finish()
-    ctx_parent := opentracing.ContextWithSpan(context.Background(), parentSpan)
-
-
-
+   
     
     if (len(request.Request)<= 1){
-        b := action(request, start, ctx_parent)
+        b := action(request, start)
         
     w.Header().Set("Content-Type","application/json")
     
@@ -253,7 +250,7 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
     
 
     }else {
-        b := forward(request, start, r, ctx_parent)
+        b := forward(request, start, r, span)
         w.Header().Set("Content-Type","application/json")
     
         w.Write(b)
@@ -273,3 +270,47 @@ func slowFunc(s string, c chan string) {
     time.Sleep(time.Duration(rand.Intn(50)) * time.Millisecond)
     c <- "received " + s
    }
+
+func Inject(span opentracing.Span, request *http.Request) error {
+	return span.Tracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(request.Header))
+}
+
+// Extract extracts the inbound HTTP request to obtain the parent span's context to ensure
+// correct propagation of span context throughout the trace.
+func Extract(tracer opentracing.Tracer, r *http.Request) (opentracing.SpanContext, error) {
+	return tracer.Extract(
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(r.Header))
+}
+
+func Init(service string) (opentracing.Tracer, io.Closer) {
+	cfg := &config.Configuration{
+		ServiceName: service,
+
+		// "const" sampler is a binary sampling strategy: 0=never sample, 1=always sample.
+		Sampler: &config.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+
+		// Log the emitted spans to stdout.
+		Reporter: &config.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
+	if err != nil {
+		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
+	}
+	return tracer, closer
+}
+
+func StartSpanFromRequest(tracer opentracing.Tracer, r *http.Request) opentracing.Span {
+	spanCtx, _ := Extract(tracer, r)
+	return tracer.StartSpan("request-receive", ext.RPCServerOption(spanCtx))
+}
+
+
