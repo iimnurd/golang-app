@@ -176,12 +176,12 @@ if err := Inject(span, req); err != nil {
     return 
 }
 
-for name, values := range req.Header {
-    // Loop over all values for the name.
-    for _, value := range values {
-        fmt.Println(name, value)
-    }
-}
+// for name, values := range req.Header {
+//     // Loop over all values for the name.
+//     for _, value := range values {
+//         fmt.Println(name, value)
+//     }
+// }
 
 
 resp, err := http.DefaultClient.Do(req)
