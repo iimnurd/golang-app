@@ -32,7 +32,7 @@ spec:
       # serviceAccountName: golang-app
       containers:
         - name: golang-app
-          image: iimnd/golang-app:0.1.8 # versi 3 oprekan baru opentracing
+          image: iimnd/golang-app:1.0.0 # versi 3 oprekan baru opentracing
           ports:
             # Use standard 8000 port for all system as much as possible
             - containerPort: 8000

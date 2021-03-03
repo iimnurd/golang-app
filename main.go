@@ -12,8 +12,8 @@ import(
     "github.com/joho/godotenv"
     "os"
     "strconv"
-    opentracing "github.com/opentracing/opentracing-go"
-    "context"
+     "github.com/opentracing/opentracing-go"
+    // "context"
     "io"
     "github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
@@ -98,7 +98,11 @@ func (s Resp_time) MarshalJSON() ([]byte, error) {
     return json.Marshal(data)
 }
 
-func action(data Request, StartTime time.Time) (jsonInBytes []byte){
+func action(data Request, StartTime time.Time,  r *http.Request, tracer opentracing.Tracer) (jsonInBytes []byte){
+    
+
+span := StartSpanFromRequest(tracer, r)
+defer span.Finish()
 
     currentTime := time.Now()
 
@@ -133,7 +137,7 @@ func pop(alist *[]string) string {
  }
 
 
-func forward(data Request, StartTime time.Time, r *http.Request, span opentracing.Span ) (newData []byte) {
+func forward(data Request, StartTime time.Time, r *http.Request, tracer opentracing.Tracer ) (newData []byte) {
   
 
 
@@ -149,12 +153,22 @@ if err != nil {
 }
 
 
-ctx := opentracing.ContextWithSpan(context.Background(), span)
-span, err_span := opentracing.StartSpanFromContext(ctx, "request-send")
+
+
+span := StartSpanFromRequest(tracer, r)
 defer span.Finish()
-if err_span != nil {
-    log.Fatalf("An Error Occured %v", err)
- }
+
+
+
+// ctx := opentracing.ContextWithSpan(context.Background(), span)
+
+// span, err_span := opentracing.StartSpanFromContext(ctx, "request-send")
+// defer span.Finish()
+
+
+// if err_span != nil {
+//     log.Fatalf("An Error Occured %v", err_span)
+//  }
 
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
@@ -220,10 +234,11 @@ func getResponse(body []byte) (*Response, error) {
 
 
 func echoHandler(w http.ResponseWriter, r *http.Request){
+  
     thisServiceName := os.Getenv("SERVICE_NAME")
     tracer, closer := Init(thisServiceName)
-	defer closer.Close()
-	opentracing.SetGlobalTracer(tracer)
+    defer closer.Close()
+    opentracing.SetGlobalTracer(tracer)
 
     start := time.Now()
 
@@ -236,13 +251,12 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
         panic(err)
     }
 
-    span := StartSpanFromRequest(tracer, r)
-	defer span.Finish()
+    
 
    
     
     if (len(request.Request)<= 1){
-        b := action(request, start)
+        b := action(request, start, r, tracer)
         
     w.Header().Set("Content-Type","application/json")
     
@@ -250,7 +264,7 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
     
 
     }else {
-        b := forward(request, start, r, span)
+        b := forward(request, start, r, tracer)
         w.Header().Set("Content-Type","application/json")
     
         w.Write(b)

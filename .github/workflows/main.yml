@@ -41,7 +41,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: iimnd/golang-app:0.1.8
+          tags: iimnd/golang-app: 1.0.0 #ini untuk sender version, depannya 1. dan untuk child pakai 2
           
       -
         name: Image digest
