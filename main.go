@@ -169,12 +169,13 @@ defer span2.Finish()
 // if err_span != nil {
 //     log.Fatalf("An Error Occured %v", err_span)
 //  }
+
 //clientURL := os.Getenv("CLIENT_URL")
-if (os.Getenv("CLIENT_URL") != ""){
-    url = os.Getenv("CLIENT_URL")
-    fmt.Println("whoops:aaa")
+// if (os.Getenv("CLIENT_URL") != ""){
+//     url = os.Getenv("CLIENT_URL")
+//     fmt.Println("whoops:aaa")
    
-    }
+//     }
 
 
 
