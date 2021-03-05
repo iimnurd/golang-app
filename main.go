@@ -170,16 +170,6 @@ defer span2.Finish()
 //     log.Fatalf("An Error Occured %v", err_span)
 //  }
 
-//clientURL := os.Getenv("CLIENT_URL")
-// if (os.Getenv("CLIENT_URL") != ""){
-//     url = os.Getenv("CLIENT_URL")
-//     fmt.Println("whoops:aaa")
-   
-//     }
-
-
-
-
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
 if err := Inject(span2, req); err != nil {
@@ -336,5 +326,3 @@ func StartSpanFromRequest(tracer opentracing.Tracer, r *http.Request) opentracin
 	spanCtx, _ := Extract(tracer, r)
 	return tracer.StartSpan("request-receive", ext.RPCServerOption(spanCtx))
 }
-
-
