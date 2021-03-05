@@ -9,3 +9,4 @@ data:
     APP_NAME=GOLANG
     DEBUG=true    
     SERVICE_NAME= SERVICE-1
+    CLIENT_URL = http://rest-api-service:9000

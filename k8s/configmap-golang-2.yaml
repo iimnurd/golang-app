@@ -9,3 +9,4 @@ data:
     APP_NAME=GOLANG
     DEBUG=true    
     SERVICE_NAME= SERVICE-2
+    CLIENT_URL = http://golang-app-service:8000

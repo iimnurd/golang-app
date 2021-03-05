@@ -16,6 +16,6 @@ spec:
     - port: 9000
       protocol: TCP
       targetPort: 8000
-      name: rest-api
+      name: http
       # Target to Pod port
 
