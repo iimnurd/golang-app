@@ -9,6 +9,7 @@ import(
     "log"
     "io/ioutil"
     "bytes"
+    "github.com/joho/godotenv"
     "os"
     "strconv"
      "github.com/opentracing/opentracing-go"
@@ -18,7 +19,7 @@ import(
 	"github.com/uber/jaeger-client-go/config"
     "github.com/opentracing/opentracing-go/ext"
     
-    // "github.com/joho/godotenv"
+
     // "github.com/opentracing/opentracing-go"
     // "github.com/opentracing/opentracing-go/ext"
     // "github.com/uber/jaeger-client-go"
@@ -58,6 +59,17 @@ type Resp_time struct {
 
 
 
+// init is invoked before main()
+func init() {
+    // loads values from .env into the system
+    if err := godotenv.Load(); err != nil {
+        log.Print("No .env file found")
+    }
+    
+}
+
+
+
 func main(){
    
     mux := http.NewServeMux()
@@ -71,6 +83,11 @@ func main(){
    
     http.ListenAndServe(":8000", mux)
 }
+
+
+
+
+
 
 
 
@@ -121,6 +138,8 @@ func pop(alist *[]string) string {
 
 
 func forward(data Request, StartTime time.Time, r *http.Request, tracer opentracing.Tracer ) (newData []byte) {
+  
+
 
 url := pop(&data.Request)
 
@@ -134,8 +153,12 @@ if err != nil {
 }
 
 
+
+
 span := StartSpanFromRequest(tracer, r)
 defer span.Finish()
+
+
 
 ctx := opentracing.ContextWithSpan(context.Background(), span)
 
@@ -143,7 +166,9 @@ ctx := opentracing.ContextWithSpan(context.Background(), span)
 span2, _ := opentracing.StartSpanFromContext(ctx, "ping-send")
 defer span2.Finish()
 
-,
+// if err_span != nil {
+//     log.Fatalf("An Error Occured %v", err_span)
+//  }
 
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
