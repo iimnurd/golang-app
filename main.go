@@ -18,7 +18,7 @@ import(
 	"github.com/uber/jaeger-client-go/config"
     "github.com/opentracing/opentracing-go/ext"
     
-     // "github.com/joho/godotenv"
+    // "github.com/joho/godotenv"
     // "github.com/opentracing/opentracing-go"
     // "github.com/opentracing/opentracing-go/ext"
     // "github.com/uber/jaeger-client-go"
@@ -32,11 +32,11 @@ var key string = ""
 type StartTime time.Time
 type EndTime float64
 
-
+//User defines model for storing account details in database
 type Request struct {
     Id string `json:"id"`
     Request []string `json:"request"`
-  
+   // CreatedAt time.Time
 }
 
 type Resp_time struct {
@@ -44,15 +44,16 @@ type Resp_time struct {
 
   }
   
-type Response struct {
+  type Response struct {
     Id string `json:"id"`
     Number  int `json:"number"`
     Response_time Resp_time `json:"response_time"`
   }
-
-type Combined struct {
+  type Combined struct {
     Response_time []string `json:"response_time"`
 }
+
+
 
 
 
@@ -60,8 +61,14 @@ type Combined struct {
 func main(){
    
     mux := http.NewServeMux()
-    mux.HandleFunc("/webhook", actionHandler)
+
+   
+
+
+
+    mux.HandleFunc("/webhook", echoHandler)
     mux.HandleFunc("/health", healthcheck)
+   
     http.ListenAndServe(":8000", mux)
 }
 
@@ -74,10 +81,14 @@ func (s Resp_time) MarshalJSON() ([]byte, error) {
     return json.Marshal(data)
 }
 
+func action(data Request, StartTime time.Time,  r *http.Request, tracer opentracing.Tracer) (jsonInBytes []byte){
+    
 
-func action(data Request, StartTime time.Time,  r *http.Request) (jsonInBytes []byte){ 
+    span := StartSpanFromRequest(tracer, r)
+    defer span.Finish()
 
     currentTime := time.Now()
+
     diff := currentTime.Sub(StartTime)
 
     datas := Response{
@@ -88,7 +99,6 @@ func action(data Request, StartTime time.Time,  r *http.Request) (jsonInBytes []
 
         },
     }
-
     if (os.Getenv("DEBUG") == "true"){
         key = os.Getenv("APP_NAME")+"-action-"+strconv.Itoa(rand.Intn(1000))
         }else {
@@ -118,22 +128,22 @@ datas := Request{
     data.Id,
     data.Request,
 }
-
 jsonInBytes, err:= json.Marshal(datas)
 if err != nil {
     log.Fatalln(err) 
 }
 
 
-
-
 span := StartSpanFromRequest(tracer, r)
 defer span.Finish()
+
 ctx := opentracing.ContextWithSpan(context.Background(), span)
+
+
 span2, _ := opentracing.StartSpanFromContext(ctx, "ping-send")
 defer span2.Finish()
 
-
+,
 
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
@@ -146,7 +156,7 @@ resp, err := http.DefaultClient.Do(req)
       log.Fatalf("An Error Occured %v", err)
    }
    defer resp.Body.Close()
-
+//Read the response body
    body, err := ioutil.ReadAll(resp.Body)
    if err != nil {
       log.Fatalln(err)
@@ -198,7 +208,7 @@ func getResponse(body []byte) (*Response, error) {
 }
 
 
-func actionHandler(w http.ResponseWriter, r *http.Request){
+func echoHandler(w http.ResponseWriter, r *http.Request){
   
     thisServiceName := os.Getenv("SERVICE_NAME")
     tracer, closer := Init(thisServiceName)
@@ -206,16 +216,22 @@ func actionHandler(w http.ResponseWriter, r *http.Request){
     opentracing.SetGlobalTracer(tracer)
 
     start := time.Now()
-    request := Request{} 
 
+    request := Request{} //initialize empty user
+    
+    //Parse json request body and use it to set fields on user
+    //Note that user is passed as a pointer variable so that it's fields can be modified
     err := json.NewDecoder(r.Body).Decode(&request)
     if err != nil{
         panic(err)
     }
 
     
+
+   
+    
     if (len(request.Request)<= 1){
-        b := action(request, start, r)
+        b := action(request, start, r, tracer)
         
     w.Header().Set("Content-Type","application/json")
     
@@ -238,8 +254,12 @@ func actionHandler(w http.ResponseWriter, r *http.Request){
 
     
 }
+// A function to be wrapped
+func slowFunc(s string, c chan string) {
+    time.Sleep(time.Duration(rand.Intn(50)) * time.Millisecond)
+    c <- "received " + s
+   }
 
-// function to inject header
 func Inject(span opentracing.Span, request *http.Request) error {
 	return span.Tracer().Inject(
 		span.Context(),
