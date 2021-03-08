@@ -13,8 +13,8 @@ spec:
     hosts:
     - "*"
   - port:
-      number: 31401
-      name: rest-api
+      number: 26932
+      name: http-custom
       protocol: TCP
     hosts:
     - "*"
@@ -37,7 +37,7 @@ spec:
         host: golang-app-service
         port:
           number: 8000
-    - port: 31401
+    - port: 26932
     route:
     - destination:
         host: rest-api-service
