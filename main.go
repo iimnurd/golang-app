@@ -326,3 +326,6 @@ func StartSpanFromRequest(tracer opentracing.Tracer, r *http.Request) opentracin
 	spanCtx, _ := Extract(tracer, r)
 	return tracer.StartSpan("request-receive", ext.RPCServerOption(spanCtx))
 }
+
+// more info : https://github.com/jaegertracing/jaeger-client-go
+//config opiton :https://github.com/jaegertracing/jaeger-client-go/blob/master/config/config_env.go
