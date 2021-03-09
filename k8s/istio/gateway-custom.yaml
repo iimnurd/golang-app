@@ -7,17 +7,18 @@ spec:
     istio: ingressgateway # use istio default controller
   servers:
   - port:
-      number: 31400
+      number: 31401
       name: http
       protocol: TCP
     hosts:
     - "*"
   - port:
-      number: 26932
+      number: 31400
       name: http-custom
       protocol: TCP
     hosts:
     - "*"
+ 
 ---
 
 apiVersion: networking.istio.io/v1alpha3
@@ -31,16 +32,18 @@ spec:
   - api-gateway
   tcp:
   - match:
-    - port: 31400
+    - port: 31401
     route:
     - destination:
         host: golang-app-service
         port:
           number: 8000
-    - port: 26932
+  - match:
+    - port: 31400
     route:
     - destination:
         host: rest-api-service
         port:
           number: 9000
+   
    

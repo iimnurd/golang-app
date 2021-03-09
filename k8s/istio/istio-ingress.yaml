@@ -3,7 +3,7 @@ kind: Service
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":"2021-03-02T11:03:03Z","labels":{"app":"istio-ingressgateway","install.operator.istio.io/owning-resource":"unknown","install.operator.istio.io/owning-resource-namespace":"istio-system","istio":"ingressgateway","istio.io/rev":"default","operator.istio.io/component":"IngressGateways","operator.istio.io/managed":"Reconcile","operator.istio.io/version":"1.8.1","release":"istio"},"managedFields":[{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:metadata":{"f:annotations":{".":{},"f:kubectl.kubernetes.io/last-applied-configuration":{}},"f:labels":{".":{},"f:app":{},"f:install.operator.istio.io/owning-resource":{},"f:install.operator.istio.io/owning-resource-namespace":{},"f:istio":{},"f:istio.io/rev":{},"f:operator.istio.io/component":{},"f:operator.istio.io/managed":{},"f:operator.istio.io/version":{},"f:release":{}}},"f:spec":{"f:externalTrafficPolicy":{},"f:ports":{".":{},"k:{\"port\":15021,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":15443,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":31400,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":443,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":80,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}}},"f:selector":{".":{},"f:app":{},"f:istio":{}},"f:sessionAffinity":{},"f:type":{}}},"manager":"istioctl","operation":"Update","time":"2021-03-02T11:03:02Z"}],"name":"istio-ingressgateway","namespace":"istio-system","resourceVersion":"162427","selfLink":"/api/v1/namespaces/istio-system/services/istio-ingressgateway","uid":"2d998002-faa8-4d7d-9be4-938d0b142163"},"spec":{"clusterIP":"10.107.148.109","externalTrafficPolicy":"Cluster","ports":[{"name":"status-port","nodePort":32678,"port":15021,"protocol":"TCP","targetPort":15021},{"name":"http2","nodePort":32321,"port":80,"protocol":"TCP","targetPort":8080},{"name":"https","nodePort":32196,"port":443,"protocol":"TCP","targetPort":8443},{"name":"tcp","nodePort":32555,"port":31400,"protocol":"TCP","targetPort":31400},{"name":"tcp2","nodePort":32556,"port":31401,"protocol":"TCP","targetPort":31401},{"name":"tls","nodePort":30862,"port":15443,"protocol":"TCP","targetPort":15443}],"selector":{"app":"istio-ingressgateway","istio":"ingressgateway"},"sessionAffinity":"None","type":"LoadBalancer"},"status":{"loadBalancer":{}}}
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":"2021-03-02T11:03:03Z","labels":{"app":"istio-ingressgateway","install.operator.istio.io/owning-resource":"unknown","install.operator.istio.io/owning-resource-namespace":"istio-system","istio":"ingressgateway","istio.io/rev":"default","operator.istio.io/component":"IngressGateways","operator.istio.io/managed":"Reconcile","operator.istio.io/version":"1.8.1","release":"istio"},"managedFields":[{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:metadata":{"f:annotations":{},"f:labels":{".":{},"f:app":{},"f:install.operator.istio.io/owning-resource":{},"f:install.operator.istio.io/owning-resource-namespace":{},"f:istio":{},"f:istio.io/rev":{},"f:operator.istio.io/component":{},"f:operator.istio.io/managed":{},"f:operator.istio.io/version":{},"f:release":{}}},"f:spec":{"f:externalTrafficPolicy":{},"f:ports":{".":{},"k:{\"port\":15021,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":15443,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":31400,\"protocol\":\"TCP\"}":{".":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":443,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":80,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:port":{},"f:protocol":{},"f:targetPort":{}}},"f:selector":{".":{},"f:app":{},"f:istio":{}},"f:sessionAffinity":{},"f:type":{}}},"manager":"istioctl","operation":"Update","time":"2021-03-02T11:03:02Z"},{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:status":{"f:loadBalancer":{"f:ingress":{}}}},"manager":"minikube","operation":"Update","time":"2021-03-02T12:39:03Z"},{"apiVersion":"v1","fieldsType":"FieldsV1","fieldsV1":{"f:metadata":{"f:annotations":{"f:kubectl.kubernetes.io/last-applied-configuration":{}}},"f:spec":{"f:ports":{"k:{\"port\":26932,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:nodePort":{},"f:port":{},"f:protocol":{},"f:targetPort":{}},"k:{\"port\":31400,\"protocol\":\"TCP\"}":{"f:name":{}},"k:{\"port\":31401,\"protocol\":\"TCP\"}":{".":{},"f:name":{},"f:nodePort":{},"f:port":{},"f:protocol":{},"f:targetPort":{}}}}},"manager":"kubectl-client-side-apply","operation":"Update","time":"2021-03-09T04:45:44Z"}],"name":"istio-ingressgateway","namespace":"istio-system","resourceVersion":"286968","selfLink":"/api/v1/namespaces/istio-system/services/istio-ingressgateway","uid":"2d998002-faa8-4d7d-9be4-938d0b142163"},"spec":{"clusterIP":"10.107.148.109","externalTrafficPolicy":"Cluster","ports":[{"name":"status-port","nodePort":32678,"port":15021,"protocol":"TCP","targetPort":15021},{"name":"http2","nodePort":32321,"port":80,"protocol":"TCP","targetPort":8080},{"name":"https","nodePort":32196,"port":443,"protocol":"TCP","targetPort":8443},{"name":"tcp-2","nodePort":32555,"port":31400,"protocol":"TCP","targetPort":31400},{"name":"tls","nodePort":30862,"port":15443,"protocol":"TCP","targetPort":15443}],"selector":{"app":"istio-ingressgateway","istio":"ingressgateway"},"sessionAffinity":"None","type":"LoadBalancer"},"status":{"loadBalancer":{"ingress":[{"ip":"10.107.148.109"}]}}}
   creationTimestamp: "2021-03-02T11:03:03Z"
   labels:
     app: istio-ingressgateway
@@ -62,7 +62,6 @@ metadata:
             f:targetPort: {}
           k:{"port":31400,"protocol":"TCP"}:
             .: {}
-            f:name: {}
             f:port: {}
             f:protocol: {}
             f:targetPort: {}
@@ -78,33 +77,28 @@ metadata:
   - apiVersion: v1
     fieldsType: FieldsV1
     fieldsV1:
-      f:metadata:
-        f:annotations:
-          f:kubectl.kubernetes.io/last-applied-configuration: {}
-      f:spec:
-        f:ports:
-          k:{"port":31401,"protocol":"TCP"}:
-            .: {}
-            f:name: {}
-            f:nodePort: {}
-            f:port: {}
-            f:protocol: {}
-            f:targetPort: {}
-    manager: kubectl-client-side-apply
-    operation: Update
-    time: "2021-03-02T11:26:34Z"
-  - apiVersion: v1
-    fieldsType: FieldsV1
-    fieldsV1:
       f:status:
         f:loadBalancer:
           f:ingress: {}
     manager: minikube
     operation: Update
     time: "2021-03-02T12:39:03Z"
+  - apiVersion: v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+      f:spec:
+        f:ports:
+          k:{"port":31400,"protocol":"TCP"}:
+            f:name: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2021-03-09T05:07:32Z"
   name: istio-ingressgateway
   namespace: istio-system
-  resourceVersion: "169983"
+  resourceVersion: "287935"
   selfLink: /api/v1/namespaces/istio-system/services/istio-ingressgateway
   uid: 2d998002-faa8-4d7d-9be4-938d0b142163
 spec:
@@ -126,26 +120,16 @@ spec:
     port: 443
     protocol: TCP
     targetPort: 8443
-  - name: tcp
+  - name: tcp-2
     nodePort: 32555
     port: 31400
     protocol: TCP
     targetPort: 31400
-  - name: tcp2
+  - name: tcp-3
     nodePort: 32556
     port: 31401
     protocol: TCP
     targetPort: 31401
-  - name: tls
-    nodePort: 30862
-    port: 15443
-    protocol: TCP
-    targetPort: 15443
-  - name: http-custom
-    nodePort: 30002
-    port: 26932
-    protocol: TCP
-    targetPort: 26932
   selector:
     app: istio-ingressgateway
     istio: ingressgateway
