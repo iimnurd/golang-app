@@ -41,7 +41,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: iimnd/golang-app:2.0.5
+          tags: iimnd/golang-app:2.0.6
           
       -
         name: Image digest

@@ -12,11 +12,12 @@ import(
     "github.com/joho/godotenv"
     "os"
     "strconv"
-    
+     "github.com/opentracing/opentracing-go"
      "context"
-  
-   
-
+    "io"
+    "github.com/uber/jaeger-client-go"
+	"github.com/uber/jaeger-client-go/config"
+    "github.com/opentracing/opentracing-go/ext"
     "github.com/prometheus/client_golang/prometheus"
      "github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -26,13 +27,6 @@ import(
     // jaegercfg "github.com/uber/jaeger-client-go/config"
     // jaegerlog "github.com/uber/jaeger-client-go/log"
     // "github.com/uber/jaeger-lib/metrics"
-    "go.opentelemetry.io/otel"
-
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/trace/jaeger"
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-    "go.opentelemetry.io/otel/trace"
-    // propagation "go.opentelemetry.io/otel/propagation"
  
 )
 var key string = ""
@@ -173,7 +167,7 @@ func (s Resp_time) MarshalJSON() ([]byte, error) {
     return json.Marshal(data)
 }
 
-func action(data Request, StartTime time.Time,  r *http.Request, tracer trace.Tracer) (jsonInBytes []byte){
+func action(data Request, StartTime time.Time,  r *http.Request, tracer opentracing.Tracer) (jsonInBytes []byte){
     
     var status string
 	defer func() {
@@ -187,12 +181,8 @@ func action(data Request, StartTime time.Time,  r *http.Request, tracer trace.Tr
             timer.ObserveDuration()
         }()
         
-    // span := StartSpanFromRequest(tracer, r)
-    // defer span.Finish()
-
-    ctx := context.Background()
-	ctx, span := tracer.Start(ctx, "ACTION")
-	defer span.End()
+    span := StartSpanFromRequest(tracer, r)
+    defer span.Finish()
 
     currentTime := time.Now()
 
@@ -227,7 +217,7 @@ func pop(alist *[]string) string {
  }
 
 
-func forward(data Request, StartTime time.Time, r *http.Request, tracer trace.Tracer ) (newData []byte) {
+func forward(data Request, StartTime time.Time, r *http.Request, tracer opentracing.Tracer ) (newData []byte) {
     var status string
 	defer func() {
         // increment the counter on defer func
@@ -252,20 +242,18 @@ if err != nil {
 }
 
 
-ctx := context.Background()
-	ctx, span := tracer.Start(ctx, "GetCurrentWeather")
-	defer span.End()
 
-// span := StartSpanFromRequest(tracer, r)
-// defer span.Finish()
+
+span := StartSpanFromRequest(tracer, r)
+defer span.Finish()
 
 
 
-// ctx := opentracing.ContextWithSpan(context.Background(), span)
+ctx := opentracing.ContextWithSpan(context.Background(), span)
 
 
-// span2, _ := opentracing.StartSpanFromContext(ctx, "ping-send")
-// defer span2.Finish()
+span2, _ := opentracing.StartSpanFromContext(ctx, "ping-send")
+defer span2.Finish()
 
 // if err_span != nil {
 //     log.Fatalf("An Error Occured %v", err_span)
@@ -273,8 +261,9 @@ ctx := context.Background()
 
 req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
-
-
+if err := Inject(span2, req); err != nil {
+    return 
+}
 resp, err := http.DefaultClient.Do(req)
 
    if err != nil {
@@ -335,14 +324,12 @@ func getResponse(body []byte) (*Response, error) {
 
 func echoHandler(w http.ResponseWriter, r *http.Request){
   
-   
+    thisServiceName := os.Getenv("SERVICE_NAME")
+    tracer, closer := Init(thisServiceName)
+    defer closer.Close()
+    opentracing.SetGlobalTracer(tracer)
 
     start := time.Now()
-    flush := initTracer()
-	defer flush()
-
-    tracer := otel.Tracer("component-main")
-    
 
     request := Request{} //initialize empty user
     
@@ -404,28 +391,50 @@ func slowFunc(s string, c chan string) {
     c <- "received " + s
    }
 
-
-
-// initTracer creates a new trace provider instance and registers it as global trace provider.
-func initTracer() func() {
-	// Create and install Jaeger export pipeline.
-	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint("http://localhost:14268/api/traces"),
-		jaeger.WithProcess(jaeger.Process{
-			ServiceName: "trace-demo",
-			Tags: []attribute.KeyValue{
-				attribute.String("exporter", "jaeger"),
-				attribute.Float64("float", 312.23),
-			},
-		}),
-		jaeger.WithSDK(&sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return flush
+func Inject(span opentracing.Span, request *http.Request) error {
+	return span.Tracer().Inject(
+		span.Context(),
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(request.Header))
 }
 
+// Extract extracts the inbound HTTP request to obtain the parent span's context to ensure
+// correct propagation of span context throughout the trace.
+func Extract(tracer opentracing.Tracer, r *http.Request) (opentracing.SpanContext, error) {
+	return tracer.Extract(
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(r.Header))
+}
+
+func Init(service string) (opentracing.Tracer, io.Closer) {
+	cfg := &config.Configuration{
+		ServiceName: service,
+
+		// "const" sampler is a binary sampling strategy: 0=never sample, 1=always sample.
+		Sampler: &config.SamplerConfig{
+			Type:  "const",
+			Param: 1,
+		},
+
+		// Log the emitted spans to stdout.
+		Reporter: &config.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
+	if err != nil {
+		panic(fmt.Sprintf("ERROR: cannot init Jaeger: %v\n", err))
+	}
+	return tracer, closer
+}
+
+func StartSpanFromRequest(tracer opentracing.Tracer, r *http.Request) opentracing.Span {
+	spanCtx, _ := Extract(tracer, r)
+	return tracer.StartSpan("request-receive", ext.RPCServerOption(spanCtx))
+}
+
+// more info : https://github.com/jaegertracing/jaeger-client-go
+//config opiton :https://github.com/jaegertracing/jaeger-client-go/blob/master/config/config_env.go
 
 
 // prometheus : https://www.jajaldoang.com/post/monitor-golang-app-with-prometheus-grafana/
