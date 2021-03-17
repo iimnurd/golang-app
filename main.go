@@ -13,7 +13,7 @@ import(
     "os"
     "strconv"
     
-     "context"
+    //  "context"
   
    
 
@@ -34,7 +34,7 @@ import(
     "go.opentelemetry.io/otel/trace"
     "go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
 	// "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-    "go.opentelemetry.io/otel/semconv"
+    // "go.opentelemetry.io/otel/semconv"
 
     "go.opentelemetry.io/otel/baggage"
     "net/http/httptrace"
@@ -270,15 +270,30 @@ if err != nil {
 // ctx := context.Background()
 // 	ctx, span := tracer.Start(ctx, "GetCurrentWeather")
 // 	defer span.End()
-ctx := baggage.ContextWithValues(context.Background(),
-		attribute.String("username", "donuts"),
-	)
-    ctx, span := tracer.Start(ctx, "say hello", trace.WithAttributes(semconv.PeerServiceKey.String("ExampleService")))
-    defer span.End()
+
+
+// ctx := baggage.ContextWithValues(context.Background(),
+// 		attribute.String("username", "donuts"),
+// 	)
+//     ctx, span := tracer.Start(ctx, "say hello", trace.WithAttributes(semconv.PeerServiceKey.String("ExampleService")))
+//     defer span.End()
+
+    uk := attribute.Key("username")
+ctx := r.Context()
+    span := trace.SpanFromContext(ctx)
+    username := baggage.Value(ctx, uk)
+    span.AddEvent("handling this...", trace.WithAttributes(uk.String(username.AsString())))
+
+    
+
+
 
     ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx))
 // span := StartSpanFromRequest(tracer, r)
 // defer span.Finish()
+
+
+
 
 
 
