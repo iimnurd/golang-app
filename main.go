@@ -32,7 +32,14 @@ import(
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
     "go.opentelemetry.io/otel/trace"
-    // propagation "go.opentelemetry.io/otel/propagation"
+    "go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace"
+	// "go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+    "go.opentelemetry.io/otel/semconv"
+
+    "go.opentelemetry.io/otel/baggage"
+    "net/http/httptrace"
+    "go.opentelemetry.io/otel/propagation"
+
  
 )
 var key string = ""
@@ -190,9 +197,17 @@ func action(data Request, StartTime time.Time,  r *http.Request, tracer trace.Tr
     // span := StartSpanFromRequest(tracer, r)
     // defer span.Finish()
 
-    ctx := context.Background()
-	ctx, span := tracer.Start(ctx, "ACTION")
-	defer span.End()
+    // ctx := context.Background()
+	// ctx, span := tracer.Start(ctx, "ACTION")
+	// defer span.End()
+    uk := attribute.Key("username")
+    ctx := r.Context()
+		span := trace.SpanFromContext(ctx)
+		username := baggage.Value(ctx, uk)
+		span.AddEvent("handling this...", trace.WithAttributes(uk.String(username.AsString())))
+
+	
+
 
     currentTime := time.Now()
 
@@ -252,10 +267,16 @@ if err != nil {
 }
 
 
-ctx := context.Background()
-	ctx, span := tracer.Start(ctx, "GetCurrentWeather")
-	defer span.End()
+// ctx := context.Background()
+// 	ctx, span := tracer.Start(ctx, "GetCurrentWeather")
+// 	defer span.End()
+ctx := baggage.ContextWithValues(context.Background(),
+		attribute.String("username", "donuts"),
+	)
+    ctx, span := tracer.Start(ctx, "say hello", trace.WithAttributes(semconv.PeerServiceKey.String("ExampleService")))
+    defer span.End()
 
+    ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx))
 // span := StartSpanFromRequest(tracer, r)
 // defer span.Finish()
 
@@ -271,9 +292,9 @@ ctx := context.Background()
 //     log.Fatalf("An Error Occured %v", err_span)
 //  }
 
-req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
+// req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
-
+req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(jsonInBytes))
 
 resp, err := http.DefaultClient.Do(req)
 
@@ -342,6 +363,8 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
 	defer flush()
 
     tracer := otel.Tracer("component-main")
+  
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
     
 
     request := Request{} //initialize empty user
@@ -423,6 +446,7 @@ func initTracer() func() {
 	if err != nil {
 		log.Fatal(err)
 	}
+    
 	return flush
 }
 

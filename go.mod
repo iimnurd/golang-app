@@ -15,6 +15,8 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
 	github.com/yurishkuro/opentracing-tutorial v0.0.0-20200924164103-7ae271badb86
+	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.18.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.18.0 // indirect
 	go.opentelemetry.io/otel v0.18.0
 	go.opentelemetry.io/otel/exporters/trace/jaeger v0.18.0
 	go.opentelemetry.io/otel/sdk v0.18.0
