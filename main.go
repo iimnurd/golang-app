@@ -18,7 +18,8 @@ import(
     "github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
     "github.com/opentracing/opentracing-go/ext"
-    
+    "github.com/prometheus/client_golang/prometheus"
+     "github.com/prometheus/client_golang/prometheus/promhttp"
 
     // "github.com/opentracing/opentracing-go"
     // "github.com/opentracing/opentracing-go/ext"
@@ -55,6 +56,58 @@ type Resp_time struct {
 }
 
 
+// create a new counter vector
+var getForwardCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_request_get_forward_count", // metric name
+		Help: "Number of forwward request.",
+	},
+	[]string{"status"}, // labels
+)
+
+// create a new counter vector
+var getActionCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_request_get_action_count", // metric name
+		Help: "Number of action request.",
+	},
+	[]string{"status"}, // labels
+)
+
+var getHealthCounter = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "http_request_get_health_count", // metric name
+		Help: "Number of health request.",
+	},
+	[]string{"status"}, // labels
+)
+
+var getActionLatency = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name:    "http_request_get_action_duration_seconds",
+		Help:    "Latency of action method request in second.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
+	},
+	[]string{"status"},
+)
+
+var getForwardLatency = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name:    "http_request_get_forward_duration_seconds",
+		Help:    "Latency of forward method request in second.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
+	},
+	[]string{"status"},
+)
+
+var getHealthLatency = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name:    "http_request_get_health_duration_seconds",
+		Help:    "Latency of get_health request in second.",
+		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
+	},
+	[]string{"status"},
+)
 
 
 
@@ -65,6 +118,16 @@ func init() {
     if err := godotenv.Load(); err != nil {
         log.Print("No .env file found")
     }
+
+  
+      
+        prometheus.MustRegister(getForwardCounter)
+        prometheus.MustRegister(getActionCounter)
+        prometheus.MustRegister(getHealthCounter)
+        prometheus.MustRegister(getForwardLatency)
+        prometheus.MustRegister(getActionLatency)
+        prometheus.MustRegister(getHealthLatency)
+    
     
 }
 
@@ -80,8 +143,14 @@ func main(){
 
     mux.HandleFunc("/webhook", echoHandler)
     mux.HandleFunc("/health", healthcheck)
-   
+    mux.Handle("/metrics", promhttp.Handler())
     http.ListenAndServe(":8000", mux)
+
+    // http.Handle("/metrics", promhttp.Handler())
+    // http.Handle("/webhook", echoHandler)
+
+	// println("listening..")
+	// http.ListenAndServe(":8000", nil)
 }
 
 
@@ -100,7 +169,17 @@ func (s Resp_time) MarshalJSON() ([]byte, error) {
 
 func action(data Request, StartTime time.Time,  r *http.Request, tracer opentracing.Tracer) (jsonInBytes []byte){
     
-
+    var status string
+	defer func() {
+        // increment the counter on defer func
+		getActionCounter.WithLabelValues(status).Inc()
+	}()
+    timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		getActionLatency.WithLabelValues(status).Observe(v)
+        }))
+        defer func() {
+            timer.ObserveDuration()
+        }()
     span := StartSpanFromRequest(tracer, r)
     defer span.Finish()
 
@@ -122,7 +201,7 @@ func action(data Request, StartTime time.Time,  r *http.Request, tracer opentrac
         key = os.Getenv("APP_NAME")
         }
     jsonInBytes, _ = json.Marshal(datas)
-    
+    status = "success"
 
    return
   
@@ -138,9 +217,18 @@ func pop(alist *[]string) string {
 
 
 func forward(data Request, StartTime time.Time, r *http.Request, tracer opentracing.Tracer ) (newData []byte) {
-  
+    var status string
+	defer func() {
+        // increment the counter on defer func
+		getForwardCounter.WithLabelValues(status).Inc()
+	}()
 
-
+    timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		getForwardLatency.WithLabelValues(status).Observe(v)
+        }))
+        defer func() {
+            timer.ObserveDuration()
+        }()
 url := pop(&data.Request)
 
 datas := Request{
@@ -217,7 +305,7 @@ resp, err := http.DefaultClient.Do(req)
         log.Fatalln(err2)
      }
     
-  
+     status = "success"
     
     return 
 }
@@ -274,6 +362,23 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
 }
 
     func healthcheck(w http.ResponseWriter, r *http.Request){
+        var status string
+        defer func() {
+            // increment the counter on defer func
+            getHealthCounter.WithLabelValues(status).Inc()
+        }()
+
+
+	    timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
+		getHealthLatency.WithLabelValues(status).Observe(v)
+        }))
+        defer func() {
+            timer.ObserveDuration()
+        }()
+
+
+
+        status="success"
         w.Write([]byte("OK"))
 
 
