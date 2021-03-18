@@ -194,12 +194,7 @@ func action(data Request, StartTime time.Time,  r *http.Request, tracer trace.Tr
             timer.ObserveDuration()
         }()
         
-    // span := StartSpanFromRequest(tracer, r)
-    // defer span.Finish()
-
-    // ctx := context.Background()
-	// ctx, span := tracer.Start(ctx, "ACTION")
-	// defer span.End()
+    
     uk := attribute.Key("username")
     ctx := r.Context()
 		span := trace.SpanFromContext(ctx)
@@ -267,16 +262,6 @@ if err != nil {
 }
 
 
-// ctx := context.Background()
-// 	ctx, span := tracer.Start(ctx, "GetCurrentWeather")
-// 	defer span.End()
-
-
-// ctx := baggage.ContextWithValues(context.Background(),
-// 		attribute.String("username", "donuts"),
-// 	)
-//     ctx, span := tracer.Start(ctx, "say hello", trace.WithAttributes(semconv.PeerServiceKey.String("ExampleService")))
-//     defer span.End()
 
     uk := attribute.Key("username")
 ctx := r.Context()
@@ -286,28 +271,8 @@ ctx := r.Context()
 
     
 
+ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx))
 
-
-    ctx = httptrace.WithClientTrace(ctx, otelhttptrace.NewClientTrace(ctx))
-// span := StartSpanFromRequest(tracer, r)
-// defer span.Finish()
-
-
-
-
-
-
-// ctx := opentracing.ContextWithSpan(context.Background(), span)
-
-
-// span2, _ := opentracing.StartSpanFromContext(ctx, "ping-send")
-// defer span2.Finish()
-
-// if err_span != nil {
-//     log.Fatalf("An Error Occured %v", err_span)
-//  }
-
-// req, _ := http.NewRequest("POST", url, bytes.NewReader(jsonInBytes))
 
 req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewReader(jsonInBytes))
 
@@ -392,8 +357,6 @@ func echoHandler(w http.ResponseWriter, r *http.Request){
     }
 
     
-
-   
     
     if (len(request.Request)<= 1){
         b := action(request, start, r, tracer)
@@ -448,7 +411,7 @@ func slowFunc(s string, c chan string) {
 func initTracer() func() {
 	// Create and install Jaeger export pipeline.
 	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint("http://jaeger-collector-http:14268/api/traces"),
+		jaeger.WithCollectorEndpoint("http://jaeger-collector-htttp:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "trace-demo",
 			Tags: []attribute.KeyValue{
