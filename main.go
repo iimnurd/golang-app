@@ -411,7 +411,7 @@ func slowFunc(s string, c chan string) {
 func initTracer() func() {
 	// Create and install Jaeger export pipeline.
 	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint("http://jaeger-collector-htttp:14268/api/traces"),
+		jaeger.WithCollectorEndpoint("http://jaeger-collector-httttp:14268/api/traces"),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "trace-demo",
 			Tags: []attribute.KeyValue{
