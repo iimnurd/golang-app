@@ -411,7 +411,9 @@ func slowFunc(s string, c chan string) {
 func initTracer() func() {
 	// Create and install Jaeger export pipeline.
 	flush, err := jaeger.InstallNewPipeline(
-		jaeger.WithCollectorEndpoint("http://jaeger-collector-httttp:14268/api/traces"),
+        url := "http://jaeger-collector-httttp:14268/api/traces";
+        log.Print(url)
+		jaeger.WithCollectorEndpoint(url),
 		jaeger.WithProcess(jaeger.Process{
 			ServiceName: "trace-demo",
 			Tags: []attribute.KeyValue{
@@ -424,7 +426,7 @@ func initTracer() func() {
 	if err != nil {
 		log.Fatal(err)
 	}
-    
+    log.Print("hi i'm here")
 	return flush
 }
 
@@ -433,3 +435,5 @@ func initTracer() func() {
 // prometheus : https://www.jajaldoang.com/post/monitor-golang-app-with-prometheus-grafana/
 // https://stackoverflow.com/questions/47138461/get-total-requests-in-a-period-of-time
 // https://www.gwos.com/application-monitoring-with-the-prometheus-client-and-groundwork-monitor/
+// https://levelup.gitconnected.com/distributed-tracing-with-opentelemetry-part-2-cc5a9a8aa88c
+// https://github.com/open-telemetry/opentelemetry-go/blob/example/http/v0.10.0/example/http/client/client.go
